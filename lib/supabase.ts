@@ -13,9 +13,13 @@ export interface ProductCategory {
   slug: string
   categories?: string[]
   bg_gradient?: string
+  // Optional fields returned by the Supabase function
+  product_desc?: string
+  product_tags?: string[]
+  product_type_img?: string
   created_at?: string
   updated_at?: string
-}
+}  
 
 export interface Product {
   id: string

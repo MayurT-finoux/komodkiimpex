@@ -6,6 +6,7 @@ import { ChevronDown, ChevronUp, CheckCircle, Package, Box, Layers } from 'lucid
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { Product } from '@/lib/supabase'
+import { STORAGE_BASE_URL } from '@/lib/config'
 
 type Props = { 
   category: string 
@@ -17,9 +18,12 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [categoryImage, setCategoryImage] = useState<string | undefined>(undefined)
+  const [categoryDesc, setCategoryDesc] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     fetchProducts()
+    fetchCategoryMeta()
   }, [category])
 
   const fetchProducts = async () => {
@@ -30,8 +34,27 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
       if (!response.ok) {
         throw new Error(data.message || 'Failed to fetch products')
       }
-      
-      setProducts(data.products || [])
+
+      // Normalize product images (check multiple possible fields)
+      const mapped = (data.products || []).map((p: any) => {
+        const possible = [
+          p.product_img,
+          p.image,
+          p.product_image,
+          p.img,
+          p.details?.image,
+          Array.isArray(p.details?.images) && p.details.images[0]
+        ].filter(Boolean)
+
+        let imgValue = possible.length ? possible[0] : undefined
+        if (typeof imgValue === 'string' && imgValue && !/^https?:\/\//i.test(imgValue)) {
+          imgValue = `${STORAGE_BASE_URL}${imgValue}`
+        }
+
+        return { ...p, image: imgValue }
+      })
+
+      setProducts(mapped)
     } catch (err) {
       console.error('Error fetching products:', err)
       setError(err instanceof Error ? err.message : 'Failed to load products')
@@ -74,11 +97,66 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
           },
         ],
       }
-      setProducts(fallbackCatalog[category] || [])
+      const fallback = (fallbackCatalog[category] || []).map((p: any) => ({ ...p, image: undefined }))
+      setProducts(fallback)
     } finally {
       setLoading(false)
     }
   }
+
+  const fetchCategoryMeta = async () => {
+    try {
+      const res = await fetch('/api/product-categories')
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.message || 'Failed to fetch categories')
+      const found = (json.categories || []).find((c: any) => c.slug === category)
+      if (found) {
+        setCategoryDesc(found.description)
+        if (found.product_type_img) {
+          const val = String(found.product_type_img)
+          setCategoryImage(/^https?:\/\//i.test(val) ? val : `${STORAGE_BASE_URL}${val}`)
+        }
+        // Fetch packaging for this category by ID
+        fetchPackagingForCategory(found.id)
+      }
+    } catch (err) {
+      // not critical
+      console.warn('Category meta fetch failed:', err)
+    }
+  }
+
+  const [packagingData, setPackagingData] = useState<any | null>(null)
+
+  const fetchPackagingForCategory = async (productTypeId: string) => {
+    try {
+      const { data, error } = await (await import('@/lib/supabase')).supabase.rpc('get_product_packaging')
+      if (error) throw error
+      const rows = (data || []).filter((r: any) => String(r.product_type_id) === String(productTypeId))
+      if (rows.length === 0) return
+      const grouped: Record<string, any> = { types: [] }
+      rows.forEach((row: any) => {
+        const specsObj = row.pkg_specs || {}
+        const specs = [specsObj.spec1, specsObj.spec2, specsObj.spec3].filter(Boolean)
+        grouped.types.push({ name: row.pkg_type, specs })
+      })
+
+      // Choose gradient by category name fallback
+      const gradientMap: Record<string, string> = { 'minerals': 'from-blue-600 to-purple-600', 'hardware': 'from-orange-600 to-red-600', 'petroleum-jelly': 'from-teal-600 to-green-600' }
+      const iconMap: Record<string, any> = { 'minerals': Package, 'hardware': Box, 'petroleum-jelly': Layers }
+      const pkg = {
+        name: categoryName,
+        gradient: gradientMap[category] || 'from-blue-600 to-purple-600',
+        icon: iconMap[category] || Package,
+        types: grouped.types
+      }
+
+      setPackagingData(pkg)
+    } catch (err) {
+      console.warn('Failed to fetch packaging for category:', err)
+    }
+  }
+
+
 
   // Map categories to packaging data
   const packagingMap: Record<string, { name: string; gradient: string; icon: any; types: any[] }> = {
@@ -114,7 +192,7 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
     },
   }
 
-  const packaging = packagingMap[category]
+  const packaging = packagingData || packagingMap[category]
 
   return (
     <>
@@ -138,19 +216,35 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
                     ← Back
                   </button>
                   <h1 className="text-3xl font-bold">{categoryName}</h1>
-                  <p className="text-gray-600 mt-2">Browse products in the {categoryName.toLowerCase()} category.</p>
+                  <p className="text-gray-600 mt-2">{categoryDesc || `Browse products in the ${categoryName.toLowerCase()} category.`}</p>
                 </div>
+
+                {categoryImage && (
+                  <div className="hidden md:block w-56 h-40 rounded-lg overflow-hidden shadow-md">
+                    <img src={categoryImage} alt={`${categoryName} image`} className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
 
               {loading ? (
-                <div className="text-center py-12">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  <p className="mt-2 text-gray-600">Loading products...</p>
+                <div className="grid md:grid-cols-2 gap-6 mb-16">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden p-6 animate-pulse">
+                      <div className="flex gap-6">
+                        <div className="w-28 h-28 bg-gray-200 rounded-lg" />
+                        <div className="flex-1 space-y-3 py-1">
+                          <div className="h-6 bg-gray-200 rounded w-3/4" />
+                          <div className="h-3 bg-gray-200 rounded w-1/2" />
+                          <div className="h-3 bg-gray-200 rounded w-1/4 mt-4" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-6 mb-16">
                   {products.map((p, i) => (
-                    <ProductCard key={p.id || i} product={p} />
+                    <ProductCard key={p.id || i} product={p} category={category} />
                   ))}
                   {products.length === 0 && (
                     <div className="p-12 bg-gray-50 rounded-xl text-center text-gray-500">
@@ -176,13 +270,19 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
   )
 }
 
-function ProductCard({ product }: { product: any }) {
+function ProductCard({ product, category }: { product: any, category: string }) {
   const [open, setOpen] = useState(false)
+  const router = require('next/router').useRouter()
+  const slug = product.slug || (product.name ? String(product.name).toLowerCase().replace(/\s+/g, '-') : String(product.id || 'product'))
   return (
     <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
       <div className="p-6 flex gap-6">
-        <div className="w-28 h-28 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-500">
-          <div className="text-xs">No Image</div>
+        <div className="w-28 h-28 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-500 overflow-hidden">
+          {product.image ? (
+            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="text-xs">No Image</div>
+          )}
         </div>
         <div className="flex-1">
           <h3 className="text-xl font-semibold mb-1">{product.name}</h3>
@@ -197,6 +297,13 @@ function ProductCard({ product }: { product: any }) {
               ) : (
                 <><ChevronDown className="w-4 h-4" /> View Details</>
               )}
+            </button>
+
+            <button
+              onClick={() => router.push(`/products/${category}/${encodeURIComponent(slug)}`)}
+              className="ml-2 inline-flex items-center px-3 py-2 bg-white/10 hover:bg-white/20 text-sm text-white rounded-full border border-white/10 transition-all"
+            >
+              View Product
             </button>
           </div>
         </div>

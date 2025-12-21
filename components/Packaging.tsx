@@ -1,8 +1,12 @@
 import { Shield, CheckCircle, Truck, Package, Box, Layers, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/router'
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
 
 export function Packaging() {
   const router = useRouter()
+  const isPackagingPage = router.pathname === '/packaging'
+  const [packagingTypes, setPackagingTypes] = useState<any[]>([])
 
   const features = [
     { icon: Shield, title: 'Quality Protection', description: 'Multi-layer packaging ensures product safety during transit' },
@@ -10,38 +14,55 @@ export function Packaging() {
     { icon: Truck, title: 'Transport Ready', description: 'Optimized for sea, air, and land freight' },
   ]
 
-  const packaging = [
-    {
-      name: 'Minerals',
-      gradient: 'from-blue-600 to-purple-600',
-      icon: Package,
-      types: [
-        { name: 'Bulk Bags', specs: ['500kg-2000kg capacity', 'UV resistant', 'Moisture proof liner'] },
-        { name: 'Drums', specs: ['50kg-200kg capacity', 'Air-tight sealing', 'Stackable design'] },
-        { name: 'Containers', specs: ['20ft & 40ft options', 'Climate controlled', 'Secure loading'] },
-      ],
-    },
-    {
-      name: 'Hardware',
-      gradient: 'from-orange-600 to-red-600',
-      icon: Box,
-      types: [
-        { name: 'Carton Boxes', specs: ['Multi-layer protection', 'Custom sizes available', 'Water resistant'] },
-        { name: 'Wooden Crates', specs: ['ISPM 15 certified', 'Load: up to 1000kg', 'Fumigation treated'] },
-        { name: 'Pallet Packaging', specs: ['Standard & Euro pallets', 'Strapping & protection', 'Forklift compatible'] },
-      ],
-    },
-    {
-      name: 'Petroleum Jelly',
-      gradient: 'from-teal-600 to-green-600',
-      icon: Layers,
-      types: [
-        { name: 'Plastic Containers', specs: ['50g-5kg sizes', 'Tamper-proof seals', 'FDA approved material'] },
-        { name: 'Metal Tins', specs: ['100g-1kg capacity', 'Air-tight closure', 'Recyclable material'] },
-        { name: 'Bulk Drums', specs: ['25kg-200kg capacity', 'Food-safe lining', 'Easy dispensing'] },
-      ],
-    },
-  ]
+  useEffect(() => {
+    fetchPackaging()
+  }, [])
+
+  const fetchPackaging = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_product_packaging')
+      if (error) throw error
+      const grouped: Record<string, any> = {}
+      ;(data || []).forEach((row: any) => {
+        const id = String(row.product_type_id)
+        // pkg_specs may be stored as JSON string or object - handle both
+        let specsObj: any = row.pkg_specs || {}
+        if (typeof specsObj === 'string') {
+          try {
+            specsObj = JSON.parse(specsObj)
+          } catch (e) {
+            // try to clean up newlines and parse loosely
+            try {
+              specsObj = JSON.parse(specsObj.replace(/\r\n|\n/g, ''))
+            } catch (err) {
+              specsObj = {}
+            }
+          }
+        }
+
+        // Collect any keys that look like spec*, sort by numeric order when possible
+        const specs: string[] = []
+        Object.keys(specsObj || {}).forEach((k) => {
+          if (/^spec\d*/i.test(k)) specs.push(String(specsObj[k]).trim())
+        })
+        // If no spec* keys found, also try generic values
+        if (specs.length === 0) {
+          Object.values(specsObj || {}).forEach((v) => {
+            if (v) specs.push(String(v).trim())
+          })
+        }
+        grouped[id].types.push({ name: row.pkg_type, specs })
+      })
+
+      const arr = Object.values(grouped).slice(0, 3)
+      setPackagingTypes(arr)
+    } catch (err) {
+      console.error('Failed loading packaging:', err)
+    }
+  }
+
+  const gradients = ['from-blue-600 to-purple-600', 'from-orange-600 to-red-600', 'from-teal-600 to-green-600', 'from-purple-600 to-pink-600']
+  const iconMap: Record<string, any> = { Minerals: Package, Hardware: Box, 'Petroleum Jelly': Layers }
 
   return (
     <section id="packaging" className="py-24 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
@@ -81,14 +102,15 @@ export function Packaging() {
           })}
         </div>
 
-        {/* Product Packaging Cards */}
+        {/* Product Packaging Cards (first 3 product types) */}
         <div className="space-y-12">
-          {packaging.map((product, idx) => {
-            const Icon = product.icon
+          {packagingTypes.map((product, idx) => {
+            const Icon = iconMap[product.name] || Package
+            const gradient = gradients[idx % gradients.length]
             return (
-              <div key={idx} className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+              <div key={product.id || idx} className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                 {/* Header */}
-                <div className={`bg-gradient-to-r ${product.gradient} p-6 text-white flex items-center gap-4`}>
+                <div className={`bg-gradient-to-r ${gradient} p-6 text-white flex items-center gap-4`}>
                   <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center">
                     <Icon className="w-8 h-8" />
                   </div>
@@ -101,7 +123,7 @@ export function Packaging() {
                 {/* Types Grid */}
                 <div className="p-8">
                   <div className="grid md:grid-cols-3 gap-6">
-                    {product.types.map((type, i) => (
+                    {product.types.map((type: any, i: number) => (
                       <div key={i} className="p-6 bg-gray-50 rounded-xl border border-gray-200 hover:border-orange-200 hover:bg-gradient-to-br hover:from-gray-50 hover:to-orange-50 transition-all">
                         <div className="flex items-center gap-3 mb-4">
                           <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
@@ -111,7 +133,7 @@ export function Packaging() {
                         </div>
                         <p className="text-xs uppercase text-gray-500 font-semibold tracking-wide mb-3">Specifications:</p>
                         <ul className="space-y-2">
-                          {type.specs.map((spec, s) => (
+                          {type.specs.map((spec: string, s: number) => (
                             <li key={s} className="flex gap-2 items-start text-sm text-gray-700">
                               <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
                               {spec}
@@ -127,16 +149,18 @@ export function Packaging() {
           })}
         </div>
 
-        {/* Learn More Button */}
-        <div className="mt-16 text-center">
-          <button
-            onClick={() => router.push('/packaging')}
-            className="btn-orange inline-flex gap-2"
-          >
-            Learn More
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
+        {/* Learn More Button (hidden on /packaging) */}
+        {!isPackagingPage && (
+          <div className="mt-16 text-center">
+            <button
+              onClick={() => router.push('/packaging')}
+              className="px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-full font-semibold transition-all shadow-lg hover:shadow-xl inline-flex gap-2"
+            >
+              Learn More
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
     </section>
   )

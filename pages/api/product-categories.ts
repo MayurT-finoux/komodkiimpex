@@ -37,9 +37,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       id: item.id,
       name: item.product_type,
       slug: item.product_type.toLowerCase().replace(/\s+/g, '-'),
-      description: `High-quality ${item.product_type} products for export`,
-      categories: [],
-      bg_gradient: gradients[index % gradients.length]
+      description: item.product_desc || `High-quality ${item.product_type} products for export`,
+      categories: Array.isArray(item.product_tags) ? item.product_tags : (item.product_tags ? String(item.product_tags).split(',').map((t: string) => t.trim()) : []),
+      bg_gradient: gradients[index % gradients.length],
+      // Preserve image filename (rendered on frontend using storage base URL)
+      product_type_img: item.product_type_img || null
     }))
 
     console.log('Returning categories:', categories)

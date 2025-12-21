@@ -18,16 +18,34 @@ export function Contact() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // TODO: Replace with actual API call when database is ready
+
     try {
-      // Simulate API call
-      console.log('Form submitted:', formData)
-      
-      // For now, just show success message
+      // Call server API that saves the query; mobile number will be null by default
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        company: formData.company || null,
+        country: formData.country || null,
+        postalCode: formData.postalCode || null,
+        message: formData.message
+      }
+
+      const res = await fetch('/api/queries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      const json = await res.json()
+      console.log('Query API response:', json)
+      if (!res.ok) {
+        console.error('Query API error:', json)
+        throw new Error(json.message || 'Failed to send query')
+      }
+
       setSubmitted(true)
       setTimeout(() => setSubmitted(false), 3000)
-      
+
       // Reset form
       setFormData({
         name: '',
@@ -39,6 +57,7 @@ export function Contact() {
       })
     } catch (error) {
       console.error('Error submitting form:', error)
+      alert('Failed to send message. Please try again later.')
     }
   }
 

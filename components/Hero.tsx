@@ -76,11 +76,17 @@ export function Hero() {
 
           {/* CTA Buttons */}
           <div className="flex flex-wrap gap-4 mb-16">
-            <button className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-full font-semibold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
+            <button
+              onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
+              className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-full font-semibold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            >
               Get Started
               <span className="ml-2 text-lg">→</span>
             </button>
-            <button className="inline-flex items-center px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-full font-semibold backdrop-blur-md border border-white/20 transition-all">
+            <button
+              onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}
+              className="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-full font-semibold backdrop-blur-md border border-white/20 transition-all"
+            >
               Learn More
               <span className="ml-2 text-lg">→</span>
             </button>
