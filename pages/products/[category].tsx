@@ -22,82 +22,49 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
   const [categoryDesc, setCategoryDesc] = useState<string | undefined>(undefined)
 
   useEffect(() => {
-    fetchProducts()
     fetchCategoryMeta()
   }, [category])
 
-  const fetchProducts = async () => {
+  useEffect(() => {
+    // Fetch products whenever category changes
+    fetchProducts()
+  }, [category])
+
+  const fetchProducts = async (typeId?: number | string) => {
     try {
-      const response = await fetch(`/api/products/${category}`)
+      const qs = typeId ? `?typeId=${typeId}` : ''
+      const response = await fetch(`/api/products/${category}${qs}`)
       const data = await response.json()
       
       if (!response.ok) {
         throw new Error(data.message || 'Failed to fetch products')
       }
 
-      // Normalize product images (check multiple possible fields)
+      // Normalize product images (prefer product_image1 and product_image2)
       const mapped = (data.products || []).map((p: any) => {
-        const possible = [
-          p.product_img,
-          p.image,
-          p.product_image,
-          p.img,
-          p.details?.image,
-          Array.isArray(p.details?.images) && p.details.images[0]
-        ].filter(Boolean)
+        const image1 = p.product_image1 || p.product_img || p.image || p.details?.image
+        const image2 = p.product_image2 || (Array.isArray(p.details?.images) && p.details.images[1])
 
-        let imgValue = possible.length ? possible[0] : undefined
-        if (typeof imgValue === 'string' && imgValue && !/^https?:\/\//i.test(imgValue)) {
-          imgValue = `${STORAGE_BASE_URL}${imgValue}`
+        const image = image1 ? (typeof image1 === 'string' && !/^https?:\/\//i.test(image1) ? `${STORAGE_BASE_URL}${image1}` : image1) : undefined
+        const imageB = image2 ? (typeof image2 === 'string' && !/^https?:\/\//i.test(image2) ? `${STORAGE_BASE_URL}${image2}` : image2) : undefined
+
+        // Parse specs JSON if present
+        let specsObj: any = p.product_specs || {}
+        if (typeof specsObj === 'string') {
+          try { specsObj = JSON.parse(specsObj) } catch { try { specsObj = JSON.parse(String(specsObj).replace(/[\r\n]/g, '')) } catch { specsObj = {} } }
         }
 
-        return { ...p, image: imgValue }
+        const details = p.details || {}
+
+        return { ...p, image, imageB, specsObj, details }
       })
 
       setProducts(mapped)
     } catch (err) {
       console.error('Error fetching products:', err)
       setError(err instanceof Error ? err.message : 'Failed to load products')
-      // Fallback to static data
-      const fallbackCatalog: Record<string, any[]> = {
-        'minerals': [
-          {
-            name: 'Iron Ore - Grade A',
-            short_description: 'Premium iron ore with consistent composition for metallurgy.',
-            details: { Origin: 'Indonesia', Purity: '62% Fe', Packaging: 'Bulk Bags / Containers', MOQ: '20 MT' },
-          },
-          {
-            name: 'Copper Concentrate',
-            short_description: 'High grade copper concentrate suitable for smelting.',
-            details: { Origin: 'Chile', Concentrate: '25% Cu', Packaging: 'Containers', MOQ: '10 MT' },
-          },
-        ],
-        'hardware': [
-          {
-            name: 'High Torque Wrench Set',
-            short_description: 'Durable professional-grade wrenches for industrial use.',
-            details: { Material: 'Chrome Vanadium', Pieces: '10', Warranty: '2 years' },
-          },
-          {
-            name: 'Industrial Fasteners Pack',
-            short_description: 'Assorted fasteners for large-scale assembly lines.',
-            details: { Material: 'Stainless Steel', Sizes: 'M4-M20', Packaging: 'Cartons' },
-          },
-        ],
-        'petroleum-jelly': [
-          {
-            name: 'Cosmetic Grade Jelly 1kg',
-            short_description: 'White, odorless petroleum jelly for cosmetic formulations.',
-            details: { Grade: 'Cosmetic', NetWeight: '1kg', ShelfLife: '3 years' },
-          },
-          {
-            name: 'Industrial Petroleum Jelly 25kg',
-            short_description: 'Industrial grade for lubricants and manufacturing.',
-            details: { Grade: 'Industrial', NetWeight: '25kg', Packaging: 'Drums' },
-          },
-        ],
-      }
-      const fallback = (fallbackCatalog[category] || []).map((p: any) => ({ ...p, image: undefined }))
+      // Fallback to static data (single-column simplified)
+      const fallback = ([( { name: 'Fallback Product', short_description: 'Static fallback product', details: {}, image: undefined })])
       setProducts(fallback)
     } finally {
       setLoading(false)
@@ -227,22 +194,20 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
               </div>
 
               {loading ? (
-                <div className="grid md:grid-cols-2 gap-6 mb-16">
+                <div className="space-y-6 mb-16">
                   {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden p-6 animate-pulse">
-                      <div className="flex gap-6">
-                        <div className="w-28 h-28 bg-gray-200 rounded-lg" />
-                        <div className="flex-1 space-y-3 py-1">
-                          <div className="h-6 bg-gray-200 rounded w-3/4" />
-                          <div className="h-3 bg-gray-200 rounded w-1/2" />
-                          <div className="h-3 bg-gray-200 rounded w-1/4 mt-4" />
-                        </div>
+                    <div key={i} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden animate-pulse">
+                      <div className="h-56 bg-gray-200 w-full" />
+                      <div className="p-6">
+                        <div className="h-6 bg-gray-200 rounded w-3/4 mb-3" />
+                        <div className="h-3 bg-gray-200 rounded w-1/2 mb-2" />
+                        <div className="h-3 bg-gray-200 rounded w-1/4" />
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="grid md:grid-cols-2 gap-6 mb-16">
+                <div className="space-y-6 mb-16">
                   {products.map((p, i) => (
                     <ProductCard key={p.id || i} product={p} category={category} />
                   ))}
@@ -272,57 +237,99 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
 
 function ProductCard({ product, category }: { product: any, category: string }) {
   const [open, setOpen] = useState(false)
-  const router = require('next/router').useRouter()
+  const [idx, setIdx] = useState(0)
+  const router = useRouter()
   const slug = product.slug || (product.name ? String(product.name).toLowerCase().replace(/\s+/g, '-') : String(product.id || 'product'))
-  return (
-    <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
-      <div className="p-6 flex gap-6">
-        <div className="w-28 h-28 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-500 overflow-hidden">
-          {product.image ? (
-            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-          ) : (
-            <div className="text-xs">No Image</div>
-          )}
-        </div>
-        <div className="flex-1">
-          <h3 className="text-xl font-semibold mb-1">{product.name}</h3>
-          <p className="text-sm text-gray-600 mb-4">{product.short_description || product.short}</p>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setOpen(!open)}
-              className="text-sm text-orange-600 font-medium inline-flex items-center gap-2"
-            >
-              {open ? (
-                <><ChevronUp className="w-4 h-4" /> Details</>
-              ) : (
-                <><ChevronDown className="w-4 h-4" /> View Details</>
-              )}
-            </button>
 
-            <button
-              onClick={() => router.push(`/products/${category}/${encodeURIComponent(slug)}`)}
-              className="ml-2 inline-flex items-center px-3 py-2 bg-white/10 hover:bg-white/20 text-sm text-white rounded-full border border-white/10 transition-all"
-            >
-              View Product
-            </button>
-          </div>
-        </div>
+  const images = [product.image].filter(Boolean)
+  if (product.imageB) images.push(product.imageB)
+
+  return (
+    <article className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+      <div className="relative h-72 md:h-96 bg-gray-100">
+        {images.length ? (
+          <>
+            <img src={images[idx]} alt={product.name} className="w-full h-full object-cover" />
+
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIdx((idx + images.length - 1) % images.length) }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full"
+                  aria-label="Previous"
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIdx((idx + 1) % images.length) }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full"
+                  aria-label="Next"
+                >
+                  ›
+                </button>
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+                  {images.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={(e) => { e.stopPropagation(); setIdx(i) }}
+                      className={`w-2 h-2 rounded-full ${i === idx ? 'bg-white' : 'bg-white/40'}`}
+                      aria-label={`Show slide ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-500">No Image</div>
+        )}
+
+        <button
+          onClick={() => router.push(`/products/${category}/${encodeURIComponent(slug)}`)}
+          className="absolute right-4 top-4 bg-white/90 text-sm px-3 py-1 rounded-full"
+        >
+          View Product
+        </button>
       </div>
-      {open && (
-        <div className="p-6 border-t border-gray-100 bg-gray-50">
-          <table className="w-full text-sm text-left">
-            <tbody>
-              {Object.entries(product.details || {}).map(([k, v]) => (
-                <tr key={k} className="odd:bg-white even:bg-gray-100">
-                  <td className="py-2 pr-4 font-medium text-gray-700 w-48">{k}</td>
-                  <td className="py-2 text-gray-700">{String(v)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+      <div className="p-6">
+        <h3 className="text-2xl font-semibold mb-2">{product.name}</h3>
+        <p className="text-gray-600 mb-4">{product.short_description || product.short}</p>
+
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setOpen(!open)}
+            aria-expanded={open}
+            className="text-sm text-orange-600 font-medium inline-flex items-center gap-2"
+          >
+            {open ? (<><ChevronUp className="w-4 h-4" /> Know more</>) : (<><ChevronDown className="w-4 h-4" /> Know more</>)}
+          </button>
+
+          <div className="text-sm text-gray-500" />
         </div>
-      )}
-    </div>
+
+        {open && (
+          <div className="mt-4 border-t border-gray-100 pt-4 text-sm text-gray-700">
+            {Object.keys(product.details || {}).length ? (
+              <table className="w-full text-sm text-left">
+                <tbody>
+                  {Object.entries(product.details || {}).map(([k, v]) => (
+                    <tr key={k} className="odd:bg-white even:bg-gray-50">
+                      <td className="py-2 pr-4 font-medium text-gray-700 w-48">{k}</td>
+                      <td className="py-2 text-gray-700">{String(v)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p>{product.product_desc || product.short_description || 'No further details available.'}</p>
+            )}
+          </div>
+        )}
+      </div>
+    </article>
   )
 }
 
@@ -368,8 +375,8 @@ function PackagingCard({ packaging }: { packaging: any }) {
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
-  const slug = params?.slug as string
-  
+  const category = params?.category as string || null
+
   // Map slugs to category names
   const categoryMap: Record<string, string> = {
     'minerals': 'MINERALS',
@@ -377,11 +384,11 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
     'petroleum-jelly': 'PETROLEUM JELLY'
   }
 
-  const categoryName = categoryMap[slug] || 'Products'
+  const categoryName = category ? (categoryMap[category] || 'Products') : 'Products'
 
   return {
     props: {
-      category: slug,
+      category: category ?? null,
       categoryName
     }
   }

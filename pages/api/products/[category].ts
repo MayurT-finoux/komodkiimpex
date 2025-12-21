@@ -6,18 +6,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method not allowed' })
   }
 
-  const { category } = req.query
+  const { category, typeId } = req.query
 
-  if (!category || typeof category !== 'string') {
-    return res.status(400).json({ message: 'Category parameter is required' })
+  if ((!category || typeof category !== 'string') && !typeId) {
+    return res.status(400).json({ message: 'Category parameter or typeId is required' })
   }
 
   try {
-    // Call your Supabase function to get products by category
-    const { data, error } = await supabase.rpc('get_products_by_category', {
-      category_slug: category
-    })
-    
+    let data: any = null
+    let error: any = null
+
+    if (typeId) {
+      // If product type id is provided, call get_products(product_type_id)
+      const id = Number(typeId)
+      const resp = await supabase.rpc('get_products', { producttype_id: id })
+      data = resp.data
+      error = resp.error
+    } else {
+      // Fallback: call RPC by slug
+      const resp = await supabase.rpc('get_products_by_category', {
+        category_slug: category as string
+      })
+      data = resp.data
+      error = resp.error
+    }
+
     if (error) {
       console.error('Supabase error:', error)
       return res.status(500).json({ message: 'Database error', error: error.message })

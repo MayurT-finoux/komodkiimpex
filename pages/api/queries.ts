@@ -28,10 +28,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     })
 
     if (error) {
-      console.error('create_user_query error:', error)
-      return res.status(500).json({ message: 'Database error', error: error.message })
+      console.error('Supabase RPC Error:', error)
+      return res.status(500).json({ message: 'RPC failed', error })
     }
 
+    console.log('create_user_query result:', data)
     return res.status(200).json({ message: 'Query saved', data })
   } catch (err) {
     console.error('API error:', err)
