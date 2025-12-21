@@ -25,6 +25,8 @@ export function Packaging() {
       const grouped: Record<string, any> = {}
       ;(data || []).forEach((row: any) => {
         const id = String(row.product_type_id)
+        if (!grouped[id]) grouped[id] = { id, name: row.product_type, types: [] }
+
         // pkg_specs may be stored as JSON string or object - handle both
         let specsObj: any = row.pkg_specs || {}
         if (typeof specsObj === 'string') {
@@ -42,15 +44,20 @@ export function Packaging() {
 
         // Collect any keys that look like spec*, sort by numeric order when possible
         const specs: string[] = []
-        Object.keys(specsObj || {}).forEach((k) => {
-          if (/^spec\d*/i.test(k)) specs.push(String(specsObj[k]).trim())
-        })
-        // If no spec* keys found, also try generic values
-        if (specs.length === 0) {
-          Object.values(specsObj || {}).forEach((v) => {
-            if (v) specs.push(String(v).trim())
+        try {
+          Object.keys(specsObj || {}).forEach((k) => {
+            if (/^spec\d*/i.test(k)) specs.push(String(specsObj[k]).trim())
           })
+          // If no spec* keys found, also try generic values
+          if (specs.length === 0) {
+            Object.values(specsObj || {}).forEach((v) => {
+              if (v) specs.push(String(v).trim())
+            })
+          }
+        } catch (err) {
+          console.warn('Failed to parse pkg_specs for product_type_id', id, err)
         }
+
         grouped[id].types.push({ name: row.pkg_type, specs })
       })
 
