@@ -13,6 +13,8 @@ export interface ProductCategory {
   slug: string
   categories?: string[]
   bg_gradient?: string
+  bgGradient?: string
+  image?: string
   // Optional fields returned by the Supabase function
   product_desc?: string
   product_tags?: string[]
