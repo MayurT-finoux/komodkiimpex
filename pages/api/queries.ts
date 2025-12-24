@@ -16,15 +16,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // mobile number intentionally null as requested
     const mobileno = null
 
-    // Call Supabase RPC to create user query
+    // Call Supabase RPC to create user query — use exact parameter names
     const { data, error } = await supabase.rpc('create_user_query', {
-      name,
-      email,
-      mobileno,
-      company: company || null,
-      country: country || null,
-      postalcode: postalCode || null,
-      message
+      p_name: name,
+      p_email: email,
+      p_mobile: mobileno,
+      p_companyname: company || null,
+      p_country: country || null,
+      p_postalcode: postalCode || null,
+      p_message: message
     })
 
     if (error) {

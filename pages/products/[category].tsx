@@ -63,8 +63,16 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
     } catch (err) {
       console.error('Error fetching products:', err)
       setError(err instanceof Error ? err.message : 'Failed to load products')
-      // Fallback to static data (single-column simplified)
-      const fallback = ([( { name: 'Fallback Product', short_description: 'Static fallback product', details: {}, image: undefined })])
+      // Fallback to static data (single-column simplified) — include required Product fields
+      const fallback: Product[] = [{
+        id: 'fallback-1',
+        name: 'Fallback Product',
+        short_description: 'Static fallback product',
+        category_id: String(category || ''),
+        details: {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }]
       setProducts(fallback)
     } finally {
       setLoading(false)
