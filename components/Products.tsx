@@ -107,7 +107,7 @@ export function Products() {
               return (
                 <button
                   key={product.id || idx}
-                  onClick={() => router.push(`/products/${slug}`)}
+                  onClick={() => router.push(`/products/${slug}?typeId=${product.id}`)}
                   className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-left bg-none border-none p-0 cursor-pointer"
                 >
                   {/* Product Background: image covers card if present, otherwise gradient */}

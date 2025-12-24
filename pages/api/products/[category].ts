@@ -17,9 +17,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let error: any = null
 
     if (typeId) {
-      // If product type id is provided, call get_products(product_type_id)
+      // If product type id is provided, call get_products(producttype_id)
       const id = Number(typeId)
-      const resp = await supabase.rpc('get_products', { producttype_id: id })
+      // RPC parameter name must match function signature (p_producttype_id)
+      const resp = await supabase.rpc('get_products', { p_producttype_id: id })
       data = resp.data
       error = resp.error
     } else {

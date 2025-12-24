@@ -26,9 +26,10 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
   }, [category])
 
   useEffect(() => {
-    // Fetch products whenever category changes
-    fetchProducts()
-  }, [category])
+    // If a typeId was passed via query (from homepage links), prefer it.
+    const typeId = (router.query?.typeId as string) || undefined
+    fetchProducts(typeId)
+  }, [category, router.query?.typeId])
 
   const fetchProducts = async (typeId?: number | string) => {
     try {
@@ -56,7 +57,18 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
 
         const details = p.details || {}
 
-        return { ...p, image, imageB, specsObj, details }
+        return {
+          ...p,
+          image,
+          imageB,
+          specsObj,
+          details,
+          // Bind canonical fields from RPC
+          name: p.product_name || p.name,
+          short_description: p.product_desc || p.short_description || p.short,
+          product_specs: specsObj || p.product_specs || null,
+          product_usage: p.product_usage || null
+        }
       })
 
       setProducts(mapped)
@@ -91,6 +103,8 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
           const val = String(found.product_type_img)
           setCategoryImage(/^https?:\/\//i.test(val) ? val : `${STORAGE_BASE_URL}${val}`)
         }
+        // Fetch products for this product type id (use server RPC get_products via API)
+        fetchProducts(found.id)
         // Fetch packaging for this category by ID
         fetchPackagingForCategory(found.id)
       }
@@ -104,14 +118,32 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
 
   const fetchPackagingForCategory = async (productTypeId: string) => {
     try {
-      const { data, error } = await (await import('@/lib/supabase')).supabase.rpc('get_product_packaging')
-      if (error) throw error
-      const rows = (data || []).filter((r: any) => String(r.product_type_id) === String(productTypeId))
-      if (rows.length === 0) return
+      // Use server API that returns only rows for this typeId (safer and faster)
+      const res = await fetch(`/api/packaging?typeId=${productTypeId}`)
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.message || 'Failed to fetch packaging')
+      const rows = json.packaging || []
+      if (!rows.length) {
+        setPackagingData(null)
+        return
+      }
+
       const grouped: Record<string, any> = { types: [] }
       rows.forEach((row: any) => {
-        const specsObj = row.pkg_specs || {}
-        const specs = [specsObj.spec1, specsObj.spec2, specsObj.spec3].filter(Boolean)
+        let specsObj: any = row.pkg_specs || {}
+        if (typeof specsObj === 'string') {
+          try { specsObj = JSON.parse(specsObj) } catch { try { specsObj = JSON.parse(String(specsObj).replace(/\r\n|\n/g, '')) } catch { specsObj = {} } }
+        }
+
+        // Prefer spec1/2/3 fields, otherwise collect values
+        let specs = []
+        if (typeof specsObj === 'object') {
+          specs = [specsObj.spec1, specsObj.spec2, specsObj.spec3].filter(Boolean)
+          if (specs.length === 0) {
+            specs = Object.values(specsObj).filter(Boolean).map((v: any) => String(v))
+          }
+        }
+
         grouped.types.push({ name: row.pkg_type, specs })
       })
 
@@ -128,6 +160,7 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
       setPackagingData(pkg)
     } catch (err) {
       console.warn('Failed to fetch packaging for category:', err)
+      setPackagingData(null)
     }
   }
 
@@ -167,7 +200,8 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
     },
   }
 
-  const packaging = packagingData || packagingMap[category]
+  // Only use dynamic packaging; do not fallback to hardcoded map
+  const packaging = packagingData || null
 
   return (
     <>
@@ -186,7 +220,7 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
                 <div>
                   <button
                     onClick={() => router.push('/')}
-                    className="text-sm text-gray-600 hover:underline mr-4"
+                    className="inline-flex items-center justify-center px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full font-semibold border border-white/20 transition-all mr-4"
                   >
                     ← Back
                   </button>
@@ -228,10 +262,14 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
               )}
 
               {/* Product-specific Packaging Card */}
-              {packaging && (
+              {packaging ? (
                 <div className="mt-20 pt-16 border-t border-gray-200">
                   <h2 className="text-3xl font-bold mb-8 text-center">Packaging for {packaging.name}</h2>
                   <PackagingCard packaging={packaging} />
+                </div>
+              ) : (
+                <div className="mt-20 pt-16 border-t border-gray-200 text-center text-gray-500">
+                  <p>No packaging information is available for this product type.</p>
                 </div>
               )}
             </div>
@@ -253,89 +291,103 @@ function ProductCard({ product, category }: { product: any, category: string }) 
   if (product.imageB) images.push(product.imageB)
 
   return (
-    <article className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
-      <div className="relative h-72 md:h-96 bg-gray-100">
-        {images.length ? (
-          <>
-            <img src={images[idx]} alt={product.name} className="w-full h-full object-cover" />
-
-            {images.length > 1 && (
-              <>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setIdx((idx + images.length - 1) % images.length) }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full"
-                  aria-label="Previous"
-                >
-                  ‹
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setIdx((idx + 1) % images.length) }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full"
-                  aria-label="Next"
-                >
-                  ›
-                </button>
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
-                  {images.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={(e) => { e.stopPropagation(); setIdx(i) }}
-                      className={`w-2 h-2 rounded-full ${i === idx ? 'bg-white' : 'bg-white/40'}`}
-                      aria-label={`Show slide ${i + 1}`}
-                    />
-                  ))}
-                </div>
-              </>
+    <article role="button" tabIndex={0} onClick={() => router.push(`/products/${category}/${encodeURIComponent(slug)}`)} onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/products/${category}/${encodeURIComponent(slug)}`) }} className="group cursor-pointer bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+      <div className="flex flex-col md:flex-row">
+        {/* Left: image / visual block (30-40% on desktop) */}
+        <div className="md:w-2/5 w-full relative bg-gradient-to-br from-neutral-800 to-neutral-900 text-white md:rounded-l-2xl overflow-hidden">
+          <div className="absolute inset-0">
+            {images.length ? (
+              <img src={images[idx]} alt={product.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-gray-700 to-neutral-800 flex items-center justify-center">
+                <div className="text-sm text-white/80 px-4">No image available</div>
+              </div>
             )}
-
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-          </>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-500">No Image</div>
-        )}
-
-        <button
-          onClick={() => router.push(`/products/${category}/${encodeURIComponent(slug)}`)}
-          className="absolute right-4 top-4 bg-white/90 text-sm px-3 py-1 rounded-full"
-        >
-          View Product
-        </button>
-      </div>
-
-      <div className="p-6">
-        <h3 className="text-2xl font-semibold mb-2">{product.name}</h3>
-        <p className="text-gray-600 mb-4">{product.short_description || product.short}</p>
-
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setOpen(!open)}
-            aria-expanded={open}
-            className="text-sm text-orange-600 font-medium inline-flex items-center gap-2"
-          >
-            {open ? (<><ChevronUp className="w-4 h-4" /> Know more</>) : (<><ChevronDown className="w-4 h-4" /> Know more</>)}
-          </button>
-
-          <div className="text-sm text-gray-500" />
+          </div>
+          {/* Slide controls (center-left/right, show on hover) */}
+          {images.length > 1 && (
+            <>
+              <button aria-label="Previous" onClick={(e) => { e.stopPropagation(); setIdx((idx + images.length - 1) % images.length) }} className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 text-white p-3 rounded-full">‹</button>
+              <button aria-label="Next" onClick={(e) => { e.stopPropagation(); setIdx((idx + 1) % images.length) }} className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 text-white p-3 rounded-full">›</button>
+            </>
+          )}
         </div>
 
-        {open && (
-          <div className="mt-4 border-t border-gray-100 pt-4 text-sm text-gray-700">
-            {Object.keys(product.details || {}).length ? (
-              <table className="w-full text-sm text-left">
-                <tbody>
-                  {Object.entries(product.details || {}).map(([k, v]) => (
-                    <tr key={k} className="odd:bg-white even:bg-gray-50">
-                      <td className="py-2 pr-4 font-medium text-gray-700 w-48">{k}</td>
-                      <td className="py-2 text-gray-700">{String(v)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p>{product.product_desc || product.short_description || 'No further details available.'}</p>
-            )}
+        {/* Right: details 60-70% */}
+        <div className="md:w-3/5 w-full p-6 flex flex-col justify-between md:rounded-r-2xl">
+          <div>
+            <h3 className="text-2xl font-semibold mb-2">{product.name}</h3>
+            <p className="text-gray-600 mb-4">{product.short_description || product.short}</p>
           </div>
-        )}
+
+          <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center gap-3">
+              {/* Removed 'View Product' button per request; card itself is clickable */}
+            </div>
+
+            <div>
+              <button
+                onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
+                aria-expanded={open}
+                className="text-sm text-orange-600 font-medium inline-flex items-center gap-2"
+              >
+                {open ? (<><ChevronUp className="w-4 h-4" /> Know more</>) : (<><ChevronDown className="w-4 h-4" /> Know more</>)}
+              </button>
+            </div>
+          </div>
+
+          {open && (
+            <div className="mt-4 border-t border-gray-100 pt-4 text-sm text-gray-700">
+              {Object.keys(product.details || {}).length ? (
+                <table className="w-full text-sm text-left mb-4">
+                  <tbody>
+                    {Object.entries(product.details || {}).map(([k, v]) => (
+                      <tr key={k} className="odd:bg-white even:bg-gray-50">
+                        <td className="py-2 pr-4 font-medium text-gray-700 w-48">{k}</td>
+                        <td className="py-2 text-gray-700">{String(v)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="mb-4">{product.product_desc || product.short_description || 'No further details available.'}</p>
+              )}
+
+              {product.product_specs && typeof product.product_specs === 'object' && (
+                <div className="mb-4">
+                  <h4 className="font-semibold mb-2">Specifications</h4>
+                  <div className="overflow-auto border rounded bg-gray-50 p-3">
+                    <table className="w-full text-sm">
+                      <tbody>
+                        {Object.entries(product.product_specs).map(([k, v]) => (
+                          <tr key={k} className="odd:bg-white even:bg-gray-50">
+                            <td className="py-1 pr-4 font-medium text-gray-700 w-40">{k}</td>
+                            <td className="py-1 text-gray-700">{String(v)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {product.product_specs && typeof product.product_specs !== 'object' && (
+                <div className="mb-4">
+                  <h4 className="font-semibold mb-2">Specifications</h4>
+                  <pre className="text-sm text-gray-700 bg-gray-50 rounded p-3 mt-2 overflow-auto">{String(product.product_specs)}</pre>
+                </div>
+              )}
+
+              {product.product_usage && (
+                <div>
+                  <h4 className="font-semibold mb-2">Usage</h4>
+                  <p className="text-sm text-gray-700">{product.product_usage}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </article>
   )

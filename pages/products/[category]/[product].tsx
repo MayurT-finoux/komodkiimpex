@@ -24,9 +24,27 @@ export default function ProductDetailPage() {
   const fetchProduct = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/products/${category}`)
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.message || 'Failed to fetch products')
+      // Try resolving the product type id and call get_products(producttype_id) first
+      let json: any = null
+      try {
+        const catRes = await fetch('/api/product-categories')
+        const catJson = await catRes.json()
+        const foundType = (catJson.categories || []).find((c: any) => c.slug === category)
+        if (foundType && foundType.id) {
+          const resp = await fetch(`/api/products/${category}?typeId=${foundType.id}`)
+          json = await resp.json()
+          if (!resp.ok) throw new Error(json.message || 'Failed to fetch products by type')
+        }
+      } catch (err) {
+        console.warn('get_products by type failed, falling back to category RPC:', err)
+      }
+
+      // Fallback to category-based RPC if needed
+      if (!json) {
+        const res = await fetch(`/api/products/${category}`)
+        json = await res.json()
+        if (!res.ok) throw new Error(json.message || 'Failed to fetch products')
+      }
 
       const items = (json.products || []).map((p: any) => {
         const image1 = p.product_image1 || p.product_img || p.image
@@ -45,7 +63,11 @@ export default function ProductDetailPage() {
           image,
           imageB,
           specsObj,
-          details: p.details || {}
+          details: p.details || {},
+          name: p.product_name || p.name,
+          short_description: p.product_desc || p.short_description || p.short,
+          product_specs: specsObj || p.product_specs || null,
+          product_usage: p.product_usage || null
         })
       })
 
@@ -116,15 +138,15 @@ export default function ProductDetailPage() {
           <div className="grid md:grid-cols-3 gap-6">
             <div className="md:col-span-2 bg-white rounded-2xl shadow p-6">
               <div className="mb-6">
-                <div className="relative rounded-lg overflow-hidden h-64 md:h-96 bg-gray-100">
+                <div className="relative rounded-lg overflow-hidden h-64 md:h-96 bg-gray-100 group">
                   {([prod.image].filter(Boolean) || []).length ? (
                     <>
                       <img src={currentImage ? (currentImage.startsWith('http') ? currentImage : `${STORAGE_BASE_URL}${currentImage}`) : undefined} className="w-full h-full object-cover" />
 
                       {prod.imageB && (
                         <>
-                          <button onClick={() => setImgIdx((imgIdx + 1) % 2)} className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full">›</button>
-                          <button onClick={() => setImgIdx((imgIdx + 2 - 1) % 2)} className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full">‹</button>
+                          <button onClick={(e) => { e.stopPropagation(); setImgIdx((imgIdx + 2 - 1) % 2) }} className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 text-white p-3 rounded-full">‹</button>
+                          <button onClick={(e) => { e.stopPropagation(); setImgIdx((imgIdx + 1) % 2) }} className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 text-white p-3 rounded-full">›</button>
                           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
                             {[prod.image, prod.imageB].map((_: any, i: number) => (
                               <button key={i} onClick={() => setImgIdx(i)} className={`w-2 h-2 rounded-full ${i === imgIdx ? 'bg-white' : 'bg-white/40'}`} aria-label={`Show slide ${i + 1}`} />
@@ -169,6 +191,13 @@ export default function ProductDetailPage() {
                     <div className="mt-4">
                       <h4 className="font-semibold">Specifications</h4>
                       <pre className="text-sm text-gray-700 bg-gray-50 rounded p-3 mt-2 overflow-auto">{typeof prod.product_specs === 'string' ? prod.product_specs : JSON.stringify(prod.product_specs, null, 2)}</pre>
+                    </div>
+                  )}
+
+                  {prod.product_usage && (
+                    <div className="mt-4">
+                      <h4 className="font-semibold">Usage</h4>
+                      <p className="text-gray-700">{prod.product_usage}</p>
                     </div>
                   )}
                 </div>
