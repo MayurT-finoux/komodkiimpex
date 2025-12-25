@@ -115,7 +115,7 @@ export function Packaging() {
             const Icon = iconMap[product.name] || Package
             const gradient = gradients[idx % gradients.length]
             return (
-              <div key={product.id || idx} className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+              <div key={product.id || idx} className="bg-white bg-surface rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                 {/* Header */}
                 <div className={`bg-gradient-to-r ${gradient} p-6 text-white flex items-center gap-4`}>
                   <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center">

@@ -12,7 +12,7 @@ export default function PackagingPage() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-white bg-surface">
         <Header />
         <main>
           <Packaging />

@@ -62,7 +62,7 @@ export function Contact() {
   }
 
   return (
-    <section id="contact" className="py-24 bg-white relative overflow-hidden">
+    <section id="contact" className="py-24 bg-white bg-surface relative overflow-hidden">
       {/* Decorative background */}
       <div className="absolute top-20 right-0 w-96 h-96 bg-orange-100 rounded-full blur-3xl opacity-30 z-0" />
 
@@ -78,7 +78,7 @@ export function Contact() {
         <div className="grid lg:grid-cols-3 gap-12">
           {/* Contact Form */}
           <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+            <form onSubmit={handleSubmit} className="bg-white bg-surface p-8 rounded-2xl shadow-lg border border-gray-100">
               <div className="grid md:grid-cols-2 gap-6 mb-6">
                 <input
                   type="text"

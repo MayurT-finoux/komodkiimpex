@@ -60,15 +60,47 @@ function AdminLogin({ onLogin }: { onLogin: () => void }) {
     setError('')
 
     try {
-      // Try calling Supabase RPC admin_login. Provide both common param names in case the function expects different names.
+      // First try server-side admin login endpoint which calls komodkiimpex.admin_login directly
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        })
+
+        const json = await res.json()
+        console.debug('/api/admin/login response:', res.status, json)
+
+        if (res.ok && json.admin) {
+          const adminRow = json.admin
+          try {
+            sessionStorage.setItem('komodki_admin_auth', 'true')
+            sessionStorage.setItem('komodki_admin_username', String(adminRow.username || ''))
+            sessionStorage.setItem('komodki_admin_id', String(adminRow.admin_id || adminRow.id || ''))
+          } catch (e) { console.warn('Failed to store admin session:', e) }
+          onLogin()
+          setLoading(false)
+          return
+        }
+
+        if (res.status === 401) {
+          setError('Invalid credentials')
+          setLoading(false)
+          return
+        }
+
+        // If the server-side endpoint failed for other reasons, fall through to try Supabase RPC
+      } catch (serverErr) {
+        console.warn('Server-side admin login failed, will attempt Supabase RPC:', serverErr)
+      }
+
+      // Fallback: Try calling Supabase RPC admin_login. Provide both common param names in case the function expects different names.
       const { data, error } = await (await import('@/lib/supabase')).supabase.rpc('admin_login', {
-        username,
-        password,
         p_username: username,
         p_password: password
       } as any)
 
-      console.debug('admin_login result:', { data, error })
+      console.debug('admin_login RPC result:', { data, error })
 
       if (error) {
         console.error('admin_login RPC error:', error)

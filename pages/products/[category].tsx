@@ -134,7 +134,17 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
       const res = await fetch(`/api/packaging?typeId=${productTypeId}`)
       const json = await res.json()
       if (!res.ok) throw new Error(json.message || 'Failed to fetch packaging')
-      const rows = json.packaging || []
+      let rows = json.packaging || []
+
+      // If no rows returned for the type, request the full set and filter locally (cached on server)
+      if (!rows.length) {
+        const allRes = await fetch('/api/packaging?all=1')
+        const allJson = await allRes.json()
+        if (allRes.ok) {
+          rows = (allJson.packaging || []).filter((r: any) => String(r.product_type_id) === String(productTypeId))
+        }
+      }
+
       if (!rows.length) {
         setPackagingData(null)
         return
@@ -223,10 +233,10 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-white bg-surface">
         <Header />
         <main>
-          <section className="bg-white min-h-[60vh]">
+          <section className="bg-white bg-surface min-h-[60vh]">
             <div className="max-w-6xl mx-auto px-4 py-20 mt-16">
               <div className="flex items-center justify-between mb-8">
                 <div>
@@ -303,7 +313,7 @@ function ProductCard({ product, category }: { product: any, category: string }) 
   if (product.imageB) images.push(product.imageB)
 
   return (
-    <article role="button" tabIndex={0} onClick={() => router.push(`/products/${category}/${encodeURIComponent(slug)}`)} onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/products/${category}/${encodeURIComponent(slug)}`) }} className="group cursor-pointer bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+    <article role="button" tabIndex={0} onClick={() => router.push(`/products/${category}/${encodeURIComponent(slug)}`)} onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/products/${category}/${encodeURIComponent(slug)}`) }} className="group cursor-pointer bg-white bg-surface rounded-2xl shadow-md border border-gray-100 overflow-hidden">
       <div className="flex flex-col md:flex-row">
         {/* Left: image / visual block (30-40% on desktop) */}
         <div className="md:w-2/5 w-full h-56 md:h-auto relative bg-gradient-to-br from-neutral-800 to-neutral-900 text-white md:rounded-l-2xl overflow-hidden">
