@@ -35,19 +35,7 @@ export function Hero() {
       <div className="absolute top-20 right-20 w-72 h-72 bg-orange-500 rounded-full blur-3xl opacity-10 z-0" />
       <div className="absolute bottom-20 left-20 w-96 h-96 bg-blue-500 rounded-full blur-3xl opacity-10 z-0" />
 
-      {/* Navigation Arrows */}
-      <button
-        onClick={prevSlide}
-        className="absolute left-6 top-1/2 -translate-y-1/2 z-20 p-3 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/30 transition-all"
-      >
-        <ChevronLeft className="w-6 h-6 text-white" />
-      </button>
-      <button
-        onClick={nextSlide}
-        className="absolute right-6 top-1/2 -translate-y-1/2 z-20 p-3 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/30 transition-all"
-      >
-        <ChevronRight className="w-6 h-6 text-white" />
-      </button>
+
 
       {/* Slide Indicators */}
       <div className="absolute bottom-48 left-1/2 -translate-x-1/2 z-20 flex gap-2">
@@ -65,7 +53,7 @@ export function Hero() {
       {/* Content */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-white">
         <div className="max-w-2xl">
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-10 leading-tight">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-10 leading-relaxed">
             Welcome to <span className="bg-gradient-to-r from-orange-400 to-yellow-300 bg-clip-text text-transparent">Komodki Impex</span>
           </h1>
 

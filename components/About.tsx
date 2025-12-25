@@ -17,7 +17,7 @@ export function About() {
   ]
 
   return (
-    <section id="about" className="py-24 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+    <section id="about" className="py-24 relative overflow-hidden">
       {/* Decorative background */}
       <div className="absolute top-0 left-1/2 w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-30 z-0" />
 

@@ -21,7 +21,7 @@ export function Header() {
     { label: 'Home', href: '/' },
     { label: 'Services', href: '#services' },
     { label: 'Products', href: '#products' },
-    { label: 'Packaging', href: '/packaging' },
+    { label: 'Packaging', href: '#packaging' },
     { label: 'About', href: '#about' },
     { label: 'Contact', href: '#contact' },
   ]

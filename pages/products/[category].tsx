@@ -72,6 +72,18 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
       })
 
       setProducts(mapped)
+
+      // If packaging not already fetched via category metadata, try fetching by scanning product type ids from loaded products
+      try {
+        const foundTypeId = mapped?.[0]?.product_type_id || mapped?.[0]?.producttype_id || mapped?.[0]?.producttypeid || mapped?.[0]?.type_id
+        if (foundTypeId && !packagingData) {
+          // ensure we fetch packaging for this type id
+          fetchPackagingForCategory(String(foundTypeId))
+        }
+      } catch (e) {
+        // ignore
+      }
+
     } catch (err) {
       console.error('Error fetching products:', err)
       setError(err instanceof Error ? err.message : 'Failed to load products')
@@ -294,7 +306,7 @@ function ProductCard({ product, category }: { product: any, category: string }) 
     <article role="button" tabIndex={0} onClick={() => router.push(`/products/${category}/${encodeURIComponent(slug)}`)} onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/products/${category}/${encodeURIComponent(slug)}`) }} className="group cursor-pointer bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
       <div className="flex flex-col md:flex-row">
         {/* Left: image / visual block (30-40% on desktop) */}
-        <div className="md:w-2/5 w-full relative bg-gradient-to-br from-neutral-800 to-neutral-900 text-white md:rounded-l-2xl overflow-hidden">
+        <div className="md:w-2/5 w-full h-56 md:h-auto relative bg-gradient-to-br from-neutral-800 to-neutral-900 text-white md:rounded-l-2xl overflow-hidden">
           <div className="absolute inset-0">
             {images.length ? (
               <img src={images[idx]} alt={product.name} className="w-full h-full object-cover" />

@@ -72,7 +72,7 @@ export function Packaging() {
   const iconMap: Record<string, any> = { Minerals: Package, Hardware: Box, 'Petroleum Jelly': Layers }
 
   return (
-    <section id="packaging" className="py-24 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
+    <section id="packaging" className="py-24 relative overflow-hidden">
       {/* Decorative background circles */}
       <div className="absolute top-20 right-0 w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-30 z-0" />
       <div className="absolute bottom-20 left-0 w-96 h-96 bg-orange-100 rounded-full blur-3xl opacity-30 z-0" />
@@ -83,7 +83,7 @@ export function Packaging() {
           <div className="inline-block px-4 py-2 bg-blue-100 rounded-full text-blue-600 font-medium text-sm mb-4">
             Packaging Solutions
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold leading-relaxed bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent mb-6">
             Professional Packaging
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">

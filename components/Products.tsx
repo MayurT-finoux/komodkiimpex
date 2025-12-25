@@ -60,7 +60,7 @@ export function Products() {
   }
 
   return (
-    <section id="products" className="py-24 bg-white relative overflow-hidden">
+    <section id="products" className="py-24 relative overflow-hidden">
       {/* Decorative elements */}
       <div className="absolute top-20 left-0 w-72 h-72 bg-blue-100 rounded-full blur-3xl opacity-40 z-0" />
       <div className="absolute bottom-20 right-0 w-72 h-72 bg-orange-100 rounded-full blur-3xl opacity-40 z-0" />
@@ -71,9 +71,9 @@ export function Products() {
           <div className="inline-block px-4 py-2 bg-blue-100 rounded-full text-blue-600 font-medium text-sm mb-4">
             What We Export
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold leading-relaxed bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent mb-6">
             Product Categories
-          </h2>
+          </h2> 
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Explore our diverse range of export-quality products
           </p>

@@ -48,27 +48,59 @@ export default function AdminPage() {
 }
 
 function AdminLogin({ onLogin }: { onLogin: () => void }) {
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    // Hardcoded credentials
-    const ADMIN_PASSWORD = 'komodki2025'
+    try {
+      // Try calling Supabase RPC admin_login. Provide both common param names in case the function expects different names.
+      const { data, error } = await (await import('@/lib/supabase')).supabase.rpc('admin_login', {
+        username,
+        password,
+        p_username: username,
+        p_password: password
+      } as any)
 
-    setTimeout(() => {
-      if (password === ADMIN_PASSWORD) {
-        onLogin()
+      console.debug('admin_login result:', { data, error })
+
+      if (error) {
+        console.error('admin_login RPC error:', error)
+        setError((error as any)?.message || 'Login failed')
       } else {
-        setError('Invalid password')
+        // Accept multiple possible response shapes: array of rows, single object, or other truthy responses
+        const hasRow = (Array.isArray(data) && data.length > 0) || (data && typeof data === 'object' && (data.admin_id || data.username))
+        const firstRow: any = Array.isArray(data) ? data[0] : data
+
+        if (hasRow) {
+          // Persist basic admin info to sessionStorage for dashboard usage
+          try {
+            const adminId = firstRow?.admin_id ?? firstRow?.id ?? ''
+            const adminUser = firstRow?.username ?? firstRow?.user ?? ''
+            sessionStorage.setItem('komodki_admin_auth', 'true')
+            sessionStorage.setItem('komodki_admin_username', String(adminUser))
+            sessionStorage.setItem('komodki_admin_id', String(adminId))
+          } catch (e) {
+            console.warn('Failed to store admin session:', e)
+          }
+
+          onLogin()
+        } else {
+          setError('Invalid credentials')
+        }
       }
+    } catch (err) {
+      console.error('Login error:', err)
+      setError('Login failed')
+    } finally {
       setLoading(false)
-    }, 800)
+    }
   }
 
   return (
@@ -84,11 +116,22 @@ function AdminLogin({ onLogin }: { onLogin: () => void }) {
             <Lock className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold gradient-text mb-2">Admin Access</h1>
-          <p className="text-gray-600">Enter password to continue</p>
+          <p className="text-gray-600">Sign in with your admin username and password</p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="input-field"
+              placeholder="Admin username"
+              required
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Password
