@@ -352,9 +352,15 @@ function ProductCard({ product, category }: { product: any, category: string }) 
     <article className="group bg-white bg-surface rounded-2xl shadow-md border border-gray-100 overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center gap-6">
         {/* Left: square image block (card-shaped, matches product-type aesthetic) */}
-        <div className="w-full md:w-48 h-48 aspect-square relative rounded-2xl overflow-hidden bg-neutral-800 text-white flex-shrink-0">
+        <div className="w-full md:w-56 h-56 aspect-square relative rounded-2xl overflow-hidden bg-neutral-800 text-white flex-shrink-0">
           {images.length ? (
-            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${images[idx]})` } as any} />
+            images.map((src, i) => (
+              <div
+                key={i}
+                className={`absolute inset-0 bg-cover bg-center transition-opacity duration-700 ease-in-out ${i === idx ? 'opacity-100' : 'opacity-0'}`}
+                style={{ backgroundImage: `url(${src})` } as any}
+              />
+            ))
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-neutral-800 flex items-center justify-center">
               <div className="text-sm text-white/80 px-4">No image available</div>
@@ -374,8 +380,8 @@ function ProductCard({ product, category }: { product: any, category: string }) 
         {/* Right: title, description and corner "Know more" */}
         <div className="md:flex-1 w-full p-6 flex flex-col justify-between relative">
           <div>
-            <h3 className="text-2xl font-semibold mb-2 text-gray-900">{product.name}</h3>
-            <p className="text-gray-600 mb-4">{product.short_description || product.short}</p>
+            <h3 className="text-3xl font-extrabold mb-3 text-gray-900">{product.name}</h3>
+            <p className="text-lg text-gray-600 mb-4">{product.short_description || product.short}</p>
           </div>
 
           <div className="absolute top-4 right-4 md:static">

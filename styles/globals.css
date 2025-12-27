@@ -28,13 +28,15 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
-  line-height: 1.3; /* increase so descenders like 'g' are never clipped */
+  /* Slightly increased line-height so descenders like 'g' are not clipped on large headings */
+  line-height: 1.35;
 }
 
 /* Add a little extra bottom spacing for large headings by default */
 h1, h2 {
   margin-bottom: 1rem;
-  padding-bottom: 0.125rem;
+  /* make space for descenders and decorative underlines */
+  padding-bottom: 0.25rem;
 }  
 
 p {
