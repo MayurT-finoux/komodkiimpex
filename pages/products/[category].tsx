@@ -350,45 +350,56 @@ function ProductCard({ product, category }: { product: any, category: string }) 
 
   return (
     <article className="group bg-white bg-surface rounded-2xl shadow-md border border-gray-100 overflow-hidden">
-      {/* Visual header (image background similar to product-type cards) */}
-      <div className="relative h-52 rounded-t-2xl overflow-hidden">
-        {images.length ? (
-          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${images[idx]})` } as any} />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-neutral-800 flex items-center justify-center">
-            <div className="text-sm text-white/80 px-4">No image available</div>
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-      </div>
+      <div className="flex flex-col md:flex-row">
+        {/* Left: image block (card-shaped, matches product-type aesthetic) */}
+        <div className="md:w-2/5 w-full h-56 md:h-48 relative rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none overflow-hidden bg-neutral-800 text-white">
+          {images.length ? (
+            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${images[idx]})` } as any} />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-neutral-800 flex items-center justify-center">
+              <div className="text-sm text-white/80 px-4">No image available</div>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
 
-      <div className="p-6">
-        <h3 className="text-2xl font-semibold mb-2 text-gray-900">{product.name}</h3>
-        <p className="text-gray-600 mb-4">{product.short_description || product.short}</p>
-
-        <div className="flex items-center justify-between">
-          <div />
-          <button
-            onClick={() => setOpen(!open)}
-            aria-expanded={open}
-            className="text-sm text-orange-600 font-medium inline-flex items-center gap-2"
-          >
-            {open ? (<><ChevronUp className="w-4 h-4" /> Know more</>) : (<><ChevronDown className="w-4 h-4" /> Know more</>)}
-          </button>
+          {/* Optional slide controls */}
+          {images.length > 1 && (
+            <>
+              <button aria-label="Previous" onClick={() => setIdx((idx + images.length - 1) % images.length)} className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full">‹</button>
+              <button aria-label="Next" onClick={() => setIdx((idx + 1) % images.length)} className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full">›</button>
+            </>
+          )}
         </div>
 
-        {open && (
-          <div className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-700">
-            {product.product_usage && (
-              <div className="mb-4">
-                <h4 className="font-semibold mb-2">Usage</h4>
-                <p className="text-sm text-gray-700">{String(product.product_usage)}</p>
-              </div>
-            )}
-
-            {renderSpecs(product.product_specs)}
+        {/* Right: title, description and corner "Know more" */}
+        <div className="md:w-3/5 w-full p-6 flex flex-col justify-between relative">
+          <div>
+            <h3 className="text-2xl font-semibold mb-2 text-gray-900">{product.name}</h3>
+            <p className="text-gray-600 mb-4">{product.short_description || product.short}</p>
           </div>
-        )}
+
+          <div className="absolute top-4 right-4 md:static">
+            <button
+              onClick={() => setOpen(!open)}
+              aria-expanded={open}
+              className="text-sm text-orange-600 font-medium inline-flex items-center gap-2"
+            >
+              {open ? (<><ChevronUp className="w-4 h-4" /> Know more</>) : (<><ChevronDown className="w-4 h-4" /> Know more</>)}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Expandable section that spans the full card width and appears below image+description */}
+      <div className={`overflow-hidden transition-all duration-200 ${open ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className="p-6 border-t border-gray-100 text-sm text-gray-700">
+          <div className="mb-4">
+            <h4 className="font-semibold mb-2">Usage</h4>
+            <p className="text-sm text-gray-700">{product.product_usage ? String(product.product_usage) : 'Usage information not provided. Please contact us for details.'}</p>
+          </div>
+
+          {renderSpecs(product.product_specs)}
+        </div>
       </div>
     </article>
   )
