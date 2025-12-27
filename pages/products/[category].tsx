@@ -249,7 +249,7 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
                 <div>
                   <button
                     onClick={() => router.push('/')}
-                    className="inline-flex items-center justify-center px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full font-semibold border border-white/20 transition-all mr-4"
+                    className="inline-flex items-center justify-center px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full font-semibold shadow-lg mr-4"
                   >
                     ← Back
                   </button>
@@ -309,110 +309,86 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
 function ProductCard({ product, category }: { product: any, category: string }) {
   const [open, setOpen] = useState(false)
   const [idx, setIdx] = useState(0)
-  const router = useRouter()
-  const slug = product.slug || (product.name ? String(product.name).toLowerCase().replace(/\s+/g, '-') : String(product.id || 'product'))
 
-  const images = [product.image].filter(Boolean)
+  const images = [product.image].filter(Boolean) as string[]
   if (product.imageB) images.push(product.imageB)
 
+  // Auto-advance slideshow for cards that have multiple images
+  useEffect(() => {
+    if (images.length < 2) return
+    const t = setInterval(() => setIdx((i) => (i + 1) % images.length), 3000)
+    return () => clearInterval(t)
+  }, [images.length])
+
+  // Helper to render specs table from JSON or object
+  const renderSpecs = (specs: any) => {
+    if (!specs) return null
+    let obj: any = specs
+    if (typeof specs === 'string') {
+      try { obj = JSON.parse(specs) } catch { try { obj = JSON.parse(String(specs).replace(/\r\n|\n/g, '')) } catch { obj = null } }
+    }
+    if (!obj || typeof obj !== 'object') return (<pre className="text-sm text-gray-700 bg-gray-50 rounded p-3 mt-2 overflow-auto">{String(specs)}</pre>)
+
+    return (
+      <div className="mb-4">
+        <h4 className="font-semibold mb-2">Specifications</h4>
+        <div className="overflow-auto border rounded bg-gray-50 p-3">
+          <table className="w-full text-sm">
+            <tbody>
+              {Object.entries(obj).map(([k, v]) => (
+                <tr key={k} className="odd:bg-white even:bg-gray-50">
+                  <td className="py-1 pr-4 font-medium text-gray-700 w-40">{k}</td>
+                  <td className="py-1 text-gray-700">{String(v)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <article role="button" tabIndex={0} onClick={() => router.push(`/products/${category}/${encodeURIComponent(slug)}`)} onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/products/${category}/${encodeURIComponent(slug)}`) }} className="group cursor-pointer bg-white bg-surface rounded-2xl shadow-md border border-gray-100 overflow-hidden">
-      <div className="flex flex-col md:flex-row">
-        {/* Left: image / visual block (30-40% on desktop) */}
-        <div className="md:w-2/5 w-full h-56 md:h-auto relative bg-gradient-to-br from-neutral-800 to-neutral-900 text-white md:rounded-l-2xl overflow-hidden">
-          <div className="absolute inset-0">
-            {images.length ? (
-              <img src={images[idx]} alt={product.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-gray-700 to-neutral-800 flex items-center justify-center">
-                <div className="text-sm text-white/80 px-4">No image available</div>
+    <article className="group bg-white bg-surface rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+      {/* Visual header (image background similar to product-type cards) */}
+      <div className="relative h-52 rounded-t-2xl overflow-hidden">
+        {images.length ? (
+          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${images[idx]})` } as any} />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-neutral-800 flex items-center justify-center">
+            <div className="text-sm text-white/80 px-4">No image available</div>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+      </div>
+
+      <div className="p-6">
+        <h3 className="text-2xl font-semibold mb-2 text-gray-900">{product.name}</h3>
+        <p className="text-gray-600 mb-4">{product.short_description || product.short}</p>
+
+        <div className="flex items-center justify-between">
+          <div />
+          <button
+            onClick={() => setOpen(!open)}
+            aria-expanded={open}
+            className="text-sm text-orange-600 font-medium inline-flex items-center gap-2"
+          >
+            {open ? (<><ChevronUp className="w-4 h-4" /> Know more</>) : (<><ChevronDown className="w-4 h-4" /> Know more</>)}
+          </button>
+        </div>
+
+        {open && (
+          <div className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-700">
+            {product.product_usage && (
+              <div className="mb-4">
+                <h4 className="font-semibold mb-2">Usage</h4>
+                <p className="text-sm text-gray-700">{String(product.product_usage)}</p>
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+
+            {renderSpecs(product.product_specs)}
           </div>
-          {/* Slide controls (center-left/right, show on hover) */}
-          {images.length > 1 && (
-            <>
-              <button aria-label="Previous" onClick={(e) => { e.stopPropagation(); setIdx((idx + images.length - 1) % images.length) }} className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 text-white p-3 rounded-full">‹</button>
-              <button aria-label="Next" onClick={(e) => { e.stopPropagation(); setIdx((idx + 1) % images.length) }} className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 text-white p-3 rounded-full">›</button>
-            </>
-          )}
-        </div>
-
-        {/* Right: details 60-70% */}
-        <div className="md:w-3/5 w-full p-6 flex flex-col justify-between md:rounded-r-2xl">
-          <div>
-            <h3 className="text-2xl font-semibold mb-2">{product.name}</h3>
-            <p className="text-gray-600 mb-4">{product.short_description || product.short}</p>
-          </div>
-
-          <div className="flex items-center justify-between mt-4">
-            <div className="flex items-center gap-3">
-              {/* Removed 'View Product' button per request; card itself is clickable */}
-            </div>
-
-            <div>
-              <button
-                onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
-                aria-expanded={open}
-                className="text-sm text-orange-600 font-medium inline-flex items-center gap-2"
-              >
-                {open ? (<><ChevronUp className="w-4 h-4" /> Know more</>) : (<><ChevronDown className="w-4 h-4" /> Know more</>)}
-              </button>
-            </div>
-          </div>
-
-          {open && (
-            <div className="mt-4 border-t border-gray-100 pt-4 text-sm text-gray-700">
-              {Object.keys(product.details || {}).length ? (
-                <table className="w-full text-sm text-left mb-4">
-                  <tbody>
-                    {Object.entries(product.details || {}).map(([k, v]) => (
-                      <tr key={k} className="odd:bg-white even:bg-gray-50">
-                        <td className="py-2 pr-4 font-medium text-gray-700 w-48">{k}</td>
-                        <td className="py-2 text-gray-700">{String(v)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p className="mb-4">{product.product_desc || product.short_description || 'No further details available.'}</p>
-              )}
-
-              {product.product_specs && typeof product.product_specs === 'object' && (
-                <div className="mb-4">
-                  <h4 className="font-semibold mb-2">Specifications</h4>
-                  <div className="overflow-auto border rounded bg-gray-50 p-3">
-                    <table className="w-full text-sm">
-                      <tbody>
-                        {Object.entries(product.product_specs).map(([k, v]) => (
-                          <tr key={k} className="odd:bg-white even:bg-gray-50">
-                            <td className="py-1 pr-4 font-medium text-gray-700 w-40">{k}</td>
-                            <td className="py-1 text-gray-700">{String(v)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {product.product_specs && typeof product.product_specs !== 'object' && (
-                <div className="mb-4">
-                  <h4 className="font-semibold mb-2">Specifications</h4>
-                  <pre className="text-sm text-gray-700 bg-gray-50 rounded p-3 mt-2 overflow-auto">{String(product.product_specs)}</pre>
-                </div>
-              )}
-
-              {product.product_usage && (
-                <div>
-                  <h4 className="font-semibold mb-2">Usage</h4>
-                  <p className="text-sm text-gray-700">{product.product_usage}</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </article>
   )
