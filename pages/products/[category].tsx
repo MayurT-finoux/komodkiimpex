@@ -350,9 +350,9 @@ function ProductCard({ product, category }: { product: any, category: string }) 
 
   return (
     <article className="group bg-white bg-surface rounded-2xl shadow-md border border-gray-100 overflow-hidden">
-      <div className="flex flex-col md:flex-row">
-        {/* Left: image block (card-shaped, matches product-type aesthetic) */}
-        <div className="md:w-2/5 w-full h-56 md:h-48 relative rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none overflow-hidden bg-neutral-800 text-white">
+      <div className="flex flex-col md:flex-row md:items-center gap-6">
+        {/* Left: square image block (card-shaped, matches product-type aesthetic) */}
+        <div className="w-full md:w-48 h-48 aspect-square relative rounded-2xl overflow-hidden bg-neutral-800 text-white flex-shrink-0">
           {images.length ? (
             <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${images[idx]})` } as any} />
           ) : (
@@ -362,7 +362,7 @@ function ProductCard({ product, category }: { product: any, category: string }) 
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
 
-          {/* Optional slide controls */}
+          {/* Optional slide controls centered vertically */}
           {images.length > 1 && (
             <>
               <button aria-label="Previous" onClick={() => setIdx((idx + images.length - 1) % images.length)} className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full">‹</button>
@@ -372,7 +372,7 @@ function ProductCard({ product, category }: { product: any, category: string }) 
         </div>
 
         {/* Right: title, description and corner "Know more" */}
-        <div className="md:w-3/5 w-full p-6 flex flex-col justify-between relative">
+        <div className="md:flex-1 w-full p-6 flex flex-col justify-between relative">
           <div>
             <h3 className="text-2xl font-semibold mb-2 text-gray-900">{product.name}</h3>
             <p className="text-gray-600 mb-4">{product.short_description || product.short}</p>
