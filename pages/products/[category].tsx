@@ -316,7 +316,7 @@ function ProductCard({ product, category }: { product: any, category: string }) 
   // Auto-advance slideshow for cards that have multiple images
   useEffect(() => {
     if (images.length < 2) return
-    const t = setInterval(() => setIdx((i) => (i + 1) % images.length), 3000)
+    const t = setInterval(() => setIdx((i) => (i + 1) % images.length), 4000)
     return () => clearInterval(t)
   }, [images.length])
 
@@ -352,12 +352,12 @@ function ProductCard({ product, category }: { product: any, category: string }) 
     <article className="group bg-white bg-surface rounded-2xl shadow-md border border-gray-100 overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center gap-6">
         {/* Left: square image block (card-shaped, matches product-type aesthetic) */}
-        <div className="w-full md:w-56 h-56 aspect-square relative rounded-2xl overflow-hidden bg-neutral-800 text-white flex-shrink-0">
+        <div className="w-full md:w-80 h-80 aspect-square relative rounded-2xl overflow-hidden bg-neutral-800 text-white flex-shrink-0">
           {images.length ? (
             images.map((src, i) => (
               <div
                 key={i}
-                className={`absolute inset-0 bg-cover bg-center transition-opacity duration-700 ease-in-out ${i === idx ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${i === idx ? 'opacity-100' : 'opacity-0'}`}
                 style={{ backgroundImage: `url(${src})` } as any}
               />
             ))
