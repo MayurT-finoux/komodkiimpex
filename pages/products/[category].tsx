@@ -108,17 +108,24 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
       const res = await fetch('/api/product-categories')
       const json = await res.json()
       if (!res.ok) throw new Error(json.message || 'Failed to fetch categories')
-      const found = (json.categories || []).find((c: any) => c.slug === category)
+
+      const categories = (json.categories || []) as any[]
+      // Try to match by slug first, then by numeric id (some links pass the type id)
+      let found = categories.find((c: any) => c.slug === category)
+      if (!found && category && /^\d+$/.test(String(category))) {
+        found = categories.find((c: any) => String(c.id) === String(category))
+      }
+
       if (found) {
         setCategoryDesc(found.description)
-        if (found.product_type_img) {
-          const val = String(found.product_type_img)
-          setCategoryImage(/^https?:\/\//i.test(val) ? val : `${STORAGE_BASE_URL}${val}`)
-        }
-        // Fetch products for this product type id (use server RPC get_products via API)
+        // Don't display product-type image on listing (we only show product images)
+        // Fetch products (prefer RPC by type id) and packaging for this product type
         fetchProducts(found.id)
-        // Fetch packaging for this category by ID
         fetchPackagingForCategory(found.id)
+      } else if (category && /^\d+$/.test(String(category))) {
+        // Category was provided as a numeric type id directly — fetch by that id
+        fetchProducts(String(category))
+        fetchPackagingForCategory(String(category))
       }
     } catch (err) {
       // not critical
@@ -250,11 +257,7 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
                   <p className="text-gray-600 mt-2">{categoryDesc || `Browse products in the ${categoryName.toLowerCase()} category.`}</p>
                 </div>
 
-                {categoryImage && (
-                  <div className="hidden md:block w-56 h-40 rounded-lg overflow-hidden shadow-md">
-                    <img src={categoryImage} alt={`${categoryName} image`} className="w-full h-full object-cover" />
-                  </div>
-                )}
+
               </div>
 
               {loading ? (

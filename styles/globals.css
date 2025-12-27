@@ -59,10 +59,12 @@ button {
 
 /* Glassmorphism effect */
 .glass {
+  /* Slight tinted gradient so the header remains visible against white sections */
+  background-image: linear-gradient(135deg, rgba(37,99,235,0.06), rgba(249,115,22,0.04));
   background-color: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 1rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.75rem;
 }
 
 .glass-sm {
@@ -305,7 +307,7 @@ textarea.input-field {
 
 /* Surface gradient for white areas to pick up brand colors subtly */
 .bg-surface {
-  background-image: linear-gradient(135deg, rgba(37,99,235,0.03), rgba(249,115,22,0.02));
+  background-image: linear-gradient(135deg, rgba(37,99,235,0.06), rgba(249,115,22,0.04));
   background-repeat: no-repeat;
   background-attachment: local;
   background-blend-mode: overlay;

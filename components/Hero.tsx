@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Globe, Package, TrendingUp } from 'lucide-re
 export function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0)
 
-  const [slides, setSlides] = useState<string[] | null>(null)
+  const [slides, setSlides] = useState<string[]>([])
 
   const stats = [
     { value: '50+', label: 'Countries Served', icon: Globe },
@@ -28,8 +28,8 @@ export function Hero() {
         // ignore
       }
 
-      // fallback to simple text slides when images not available
-      setSlides([null])
+      // fallback to empty slides when images not available
+      setSlides([])
     }
 
     load()

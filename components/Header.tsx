@@ -46,26 +46,26 @@ export function Header() {
   }
 
   return (
-    <header className="fixed w-full top-0 z-50 py-2 px-4">
+    <header className="fixed w-full top-0 z-50 py-1 px-4">
       {/* Glassmorphic container */}
       <div className="glass max-w-7xl mx-auto">
-        <nav className="flex items-center justify-between px-6 py-2">
+        <nav className="flex items-center justify-between px-4 py-1">
           {/* Logo Section */}
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="text-3xl">🌍</div>
+            <div className="text-2xl">🌍</div>
             <div>
               <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Export Business</p>
-              <h1 className="gradient-text font-bold text-base">Komodki Impex</h1>
+              <h1 className="gradient-text font-bold text-sm">Komodki Impex</h1>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
               <button
                 key={link.label}
                 onClick={() => handleNavClick(link.href)}
-                className="nav-link text-gray-700 font-medium hover:text-orange-600"
+                className="nav-link text-gray-800 font-medium hover:text-orange-600"
               >
                 {link.label}
               </button>
@@ -73,8 +73,8 @@ export function Header() {
           </div>
 
           {/* CTA Button + Mobile Menu */}
-          <div className="flex items-center gap-4">
-            <button className="btn-orange hidden md:inline-flex gap-2">
+          <div className="flex items-center gap-3">
+            <button className="btn-orange hidden md:inline-flex gap-2 px-4 py-2">
               Get Quote
             </button>
 
@@ -84,9 +84,9 @@ export function Header() {
               className="md:hidden p-2 hover:bg-white/50 rounded-lg transition-colors duration-300"
             >
               {isOpen ? (
-                <X className="w-6 h-6 text-gray-700" />
+                <X className="w-6 h-6 text-gray-800" />
               ) : (
-                <Menu className="w-6 h-6 text-gray-700" />
+                <Menu className="w-6 h-6 text-gray-800" />
               )}
             </button>
           </div>
@@ -94,12 +94,12 @@ export function Header() {
 
         {/* Mobile Navigation Menu */}
         {isOpen && (
-          <div className="md:hidden border-t border-white/20 px-6 py-4 space-y-3">
+          <div className="md:hidden border-t border-white/20 px-4 py-3 space-y-3">
             {navLinks.map((link) => (
               <button
                 key={link.label}
                 onClick={() => handleNavClick(link.href)}
-                className="block nav-link text-gray-700 font-medium py-2 hover:text-orange-600 w-full text-left"
+                className="block nav-link text-gray-800 font-medium py-2 hover:text-orange-600 w-full text-left"
               >
                 {link.label}
               </button>
