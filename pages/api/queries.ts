@@ -44,6 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const TO_EMAIL = process.env.TO_EMAIL || SMTP_USER
 
     if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+      let mailError: any = null
       try {
         const transporter = nodemailer.createTransport({
           host: SMTP_HOST,
@@ -51,6 +52,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           secure: SMTP_PORT === 465,
           auth: { user: SMTP_USER, pass: SMTP_PASS }
         })
+
+        // Verify SMTP connection early (helps find config/auth errors)
+        try {
+          await transporter.verify()
+        } catch (verifyErr) {
+          console.error('SMTP verify failed:', verifyErr)
+          mailError = verifyErr
+        }
 
         const subject = `New contact inquiry: ${name}`
         const html = `
@@ -66,16 +75,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           <p>Saved to DB at ${new Date().toISOString()}</p>
         `
 
-        await transporter.sendMail({
-          from: FROM_EMAIL,
-          to: TO_EMAIL,
-          replyTo: email,
-          subject,
-          html,
-          text: `${name} (${email})\n\n${message}`
-        })
-      } catch (mailErr) {
-        console.warn('Failed to send notification email:', mailErr)
+        if (!mailError) {
+          try {
+            await transporter.sendMail({
+              from: FROM_EMAIL,
+              to: TO_EMAIL,
+              replyTo: email,
+              subject,
+              html,
+              text: `${name} (${email})\n\n${message}`
+            })
+          } catch (sendErr) {
+            console.error('Failed to send notification email:', sendErr)
+            mailError = sendErr
+          }
+        }
+
+      } catch (mailErrOuter) {
+        console.error('Unexpected mail error:', mailErrOuter)
+        mailError = mailErrOuter
+      }
+
+      // If caller provided the correct debug token header, include mail error details in the response for debugging
+      const debugToken = process.env.EMAIL_DEBUG_TOKEN
+      const callerToken = String(req.headers['x-email-debug'] || '')
+      if (mailError && debugToken && callerToken && debugToken === callerToken) {
+        return res.status(500).json({ message: 'Query saved but mail failed', mailError: String(mailError) })
+      }
+
+      if (mailError) {
+        // generic warning for production - do not expose internals
+        console.warn('Email failed to send; check SMTP settings and SMTP provider logs')
       }
     }
 
