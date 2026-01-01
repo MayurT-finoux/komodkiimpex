@@ -231,6 +231,7 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
 
   // Only use dynamic packaging; do not fallback to hardcoded map
   const packaging = packagingData || null
+  const headingGradient = 'bg-gradient-to-r ' + (packaging?.gradient || packagingMap[category]?.gradient || 'from-blue-600 to-orange-500')
 
   return (
     <>
@@ -247,14 +248,8 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
             <div className="max-w-6xl mx-auto px-4 py-20 mt-16">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <button
-                    onClick={() => router.push('/')}
-                    className="inline-flex items-center justify-center px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full font-semibold shadow-lg mr-4"
-                  >
-                    ← Back
-                  </button>
-                  <h1 className="text-3xl font-bold">{categoryName}</h1>
-                  <p className="text-gray-600 mt-2">{categoryDesc || `Browse products in the ${categoryName.toLowerCase()} category.`}</p>
+                  <h1 className={`text-4xl md:text-5xl font-bold leading-relaxed mb-2 bg-clip-text text-transparent ${headingGradient}`}>{categoryName}</h1>
+                  <p className="text-lg text-gray-600 mt-2">{categoryDesc || `Browse products in the ${categoryName.toLowerCase()} category.`}</p>
                 </div>
 
 
@@ -289,7 +284,7 @@ export default function ProductCategoryPage({ category, categoryName }: Props) {
               {/* Product-specific Packaging Card */}
               {packaging ? (
                 <div className="mt-20 pt-16 border-t border-gray-200">
-                  <h2 className="text-3xl font-bold mb-8 text-center">Packaging for {packaging.name}</h2>
+                  <h2 className="text-3xl font-bold mb-8 text-center bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">Professional Packaging</h2>
                   <PackagingCard packaging={packaging} />
                 </div>
               ) : (

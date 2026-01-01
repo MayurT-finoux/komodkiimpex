@@ -48,7 +48,7 @@ export function Header() {
   return (
     <header className="fixed w-full top-0 z-50 py-1 px-4">
       {/* Glassmorphic container */}
-      <div className="glass max-w-7xl mx-auto">
+      <div className="glass max-w-6xl mx-auto">
         <nav className="flex items-center justify-between px-4 py-1">
           {/* Logo Section */}
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
@@ -60,7 +60,7 @@ export function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-4">
             {navLinks.map((link) => (
               <button
                 key={link.label}
@@ -73,8 +73,8 @@ export function Header() {
           </div>
 
           {/* CTA Button + Mobile Menu */}
-          <div className="flex items-center gap-3">
-            <button className="btn-orange hidden md:inline-flex gap-2 px-4 py-2">
+          <div className="flex items-center gap-2">
+            <button onClick={() => handleNavClick('#contact')} className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full font-semibold shadow-lg hidden md:inline-flex">
               Get Quote
             </button>
 
@@ -104,7 +104,7 @@ export function Header() {
                 {link.label}
               </button>
             ))}
-            <button className="btn-orange w-full mt-4">Get Quote</button>
+            <button onClick={() => handleNavClick('#contact')} className="btn btn-orange w-full mt-4 rounded-full py-3">Get Quote</button>
           </div>
         )}
       </div>

@@ -30,6 +30,10 @@ export function About() {
       <div className="absolute top-0 left-1/2 w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-30 z-0" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Intro */}
+        <div className="text-center mb-8">
+          <div className="inline-block px-4 py-2 bg-blue-100 rounded-full text-blue-600 font-medium text-sm mb-4">What We Export</div>
+        </div>
         {/* Main Grid */}
         <div className="grid lg:grid-cols-2 gap-16 items-center mb-16">
           {/* Image Side */}
