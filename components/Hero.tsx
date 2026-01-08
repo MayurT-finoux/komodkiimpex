@@ -7,9 +7,9 @@ export function Hero() {
   const [slides, setSlides] = useState<string[]>([])
 
   const stats = [
-    { value: '50+', label: 'Countries Served', icon: Globe },
-    { value: '1000+', label: 'Products Exported', icon: Package },
-    { value: '15+', label: 'Years Experience', icon: TrendingUp },
+    { label: 'Global Trade Focus', icon: Globe },
+    { label: 'Multi-Product Portfolio', icon: Package },
+    { label: 'Quality-Driven Operations', icon: TrendingUp },
   ]
 
   useEffect(() => {
@@ -87,7 +87,7 @@ export function Hero() {
 
           {/* Subheading */}
           <p className="text-lg md:text-xl text-gray-200 max-w-2xl mb-10 leading-relaxed">
-            Your trusted global partner for premium minerals, hardware, and petroleum jelly
+            Reliable Global Trade Partner for Minerals, Hardware & Petroleum Jelly
           </p>
 
           {/* CTA Buttons */}
@@ -119,8 +119,7 @@ export function Hero() {
                   <Icon className="w-6 h-6 text-white" />
                 </div>
                 <div className="text-left">
-                  <h3 className="text-2xl font-bold">{stat.value}</h3>
-                  <p className="text-gray-300 text-sm">{stat.label}</p>
+                  <h3 className="text-2xl font-bold">{stat.label}</h3>
                 </div>
               </div>
             )
