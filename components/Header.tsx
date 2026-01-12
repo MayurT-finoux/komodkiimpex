@@ -8,7 +8,7 @@ import { useRouter } from 'next/router'
  * 
  * Features:
  * - Fixed position with glassmorphic background
- * - Logo: Globe emoji + company name with gradient text
+ * - Logo: Komodki Impex neon logo
  * - Navigation with animated gradient underlines
  * - Responsive hamburger menu for mobile
  * - Orange gradient CTA "Get Quote" button
@@ -49,14 +49,14 @@ export function Header() {
     <header className="fixed w-full top-0 z-50 py-1 px-4">
       {/* Glassmorphic container */}
       <div className="glass max-w-6xl mx-auto">
-        <nav className="flex items-center justify-between px-4 py-1">
-          {/* Logo Section */}
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="text-2xl">🌍</div>
-            <div>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Export Business</p>
-              <h1 className="gradient-text font-bold text-sm">Komodki Impex</h1>
-            </div>
+        <nav className="flex items-center justify-between px-4 py-0">
+          {/* Logo Section - Independent sizing */}
+          <Link href="/" className="flex items-center flex-shrink-0 -my-3">
+            <img
+              src="https://jgtsotoxfqbptrwtzkjc.supabase.co/storage/v1/object/public/Komodkiimpex/logo/komodki.png"
+              alt="Komodki Impex Logo"
+              className="h-32 w-auto"
+            />
           </Link>
 
           {/* Desktop Navigation */}
